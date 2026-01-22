@@ -8,7 +8,7 @@
 
 ---
 
-## ✨ 核心特性
+## ✨ 特性
 
 - 📈 **真实数据**：50只A股热门股票，6年历史数据
 - 🤖 **智能对话**：基于LLM的自然语言交互
@@ -16,118 +16,118 @@
 - 📚 **知识库**：金融术语RAG检索
 - 🐳 **Docker部署**：一键启动，支持Mock/GPU模式
 - 🌐 **API接口**：FastAPI RESTful服务
-- 💻 **CLI客户端**：友好的命令行界面
 
 ---
 
-## 🚀 快速开始
+## 🚀 快速开始（3步）
 
-### 方式1：Docker部署（推荐）
-
-```bash
-# 使用Mock模式（无需GPU）
-docker build --build-arg MODE=mock -t stock-agent:mock .
-docker run -d -p 8765:8765 stock-agent:mock
-
-# 访问API文档
-http://localhost:8765/docs
-```
-
-### 方式2：从源码运行
+### 步骤1：获取代码
 
 ```bash
-# 1. 克隆仓库
 git clone https://github.com/conan7072/stock-agent.git
 cd stock-agent
+```
 
-# 2. 安装依赖
+### 步骤2：安装依赖
+
+```bash
 pip install -r requirements.txt
 pip install -r server/requirements.txt
-
-# 3. 下载数据
-python scripts/download_stock_data.py
-python scripts/convert_index.py
-
-# 4. 启动服务
-python start_server.py
-
-# 5. 启动客户端（另一个终端）
-python start_client.py
+pip install -r client/requirements.txt
 ```
+
+### 步骤3：准备数据
+
+```bash
+# 下载股票数据
+python scripts/download_stock_data.py
+
+# 构建知识库索引
+python scripts/convert_index.py
+```
+
+### 步骤4：启动服务
+
+```bash
+# 启动服务端（Mock模式，无需GPU）
+python start_server.py
+```
+
+**服务已启动！** 访问 http://localhost:8765/docs 查看API文档
 
 ---
 
-## 💬 使用示例
+## 💬 使用方式
 
-### API调用
+### 方式1：命令行客户端（推荐新手）
+
+```bash
+# 新开一个终端，启动客户端
+python start_client.py
+
+# 开始对话
+您: 比亚迪现在多少钱？
+Agent: 【比亚迪(002594)】最新行情：收盘价94.10元...
+
+您: 什么是MACD指标？
+Agent: MACD是异同移动平均线，用于判断趋势...
+
+您: exit  # 退出
+```
+
+### 方式2：API调用（推荐开发者）
 
 ```python
 import requests
 
+# 发送查询
 response = requests.post(
     "http://localhost:8765/chat",
     json={"query": "比亚迪现在多少钱？"}
 )
+
+# 获取结果
 print(response.json()['answer'])
 ```
 
-### CLI交互
+### 方式3：浏览器测试（推荐快速体验）
 
-```bash
-$ python start_client.py
+访问 **http://localhost:8765/docs**
 
-欢迎使用股票咨询Agent！
-
-您: 比亚迪现在多少钱？
-Agent: 【比亚迪(002594)】最新行情：
-- 收盘价: 94.10元
-- 涨跌幅: -0.68%
-- 成交量: 123,456手
-...
-
-您: 什么是MACD指标？
-Agent: MACD（异同移动平均线）是技术分析中的趋势指标...
-```
+在Swagger UI中测试所有API：
+1. 点击 `POST /chat`
+2. 点击 "Try it out"
+3. 输入问题：`{"query": "比亚迪现在多少钱？"}`
+4. 点击 "Execute"
 
 ---
 
-## 🛠️ 技术栈
+## 🐳 Docker部署（推荐生产环境）
 
-- **Agent框架**: LangChain + LangGraph
-- **LLM**: ChatGLM3-6B / Mock模式
-- **Web框架**: FastAPI + Uvicorn
-- **数据源**: akshare（A股实时数据）
-- **存储**: Parquet + JSON
-- **部署**: Docker + docker-compose
-
----
-
-## 📦 Docker部署
-
-### Mock模式（无GPU）
+### Mock模式（无需GPU）
 
 ```bash
-# 构建
-docker build --build-arg MODE=mock -t stock-agent:mock .
-
-# 启动
+# 一键启动
 docker-compose --profile mock up -d
 
 # 查看日志
 docker-compose logs -f agent-mock
+
+# 访问服务
+curl http://localhost:8765/health
 ```
 
-### GPU模式（ChatGLM3）
+### GPU模式（ChatGLM3-6B）
 
 ```bash
-# 1. 下载模型
+# 1. 下载模型（需要等待）
 python scripts/download_model.py --model chatglm3-6b-int4
 
-# 2. 修改配置 server/configs/server_config.yaml
-#    设置 mock_mode: false
+# 2. 修改配置
+# 编辑 server/configs/server_config.yaml
+# 设置 mock_mode: false
 
-# 3. 构建并启动
-docker build --build-arg MODE=gpu -t stock-agent:chatglm3 .
+# 3. 启动GPU版本（需要NVIDIA Docker）
 docker-compose --profile chatglm3 up -d
 ```
 
@@ -135,24 +135,10 @@ docker-compose --profile chatglm3 up -d
 
 ---
 
-## 📚 文档
+## 📖 查询示例
 
-| 文档 | 说明 |
-|------|------|
-| [QUICKSTART.md](./QUICKSTART.md) | 快速开始指南 |
-| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | 完整使用指南 |
-| [DOCKER_GUIDE.md](./DOCKER_GUIDE.md) | Docker部署指南 |
-| [MODEL_GUIDE.md](./MODEL_GUIDE.md) | 模型选择指南 |
-| [TOOLS_GUIDE.md](./TOOLS_GUIDE.md) | 工具使用说明 |
-
----
-
-## 🎯 功能展示
-
-### 支持的查询类型
-
-| 类型 | 示例 |
-|------|------|
+| 查询类型 | 示例问题 |
+|---------|---------|
 | **价格查询** | "比亚迪现在多少钱？" |
 | **技术指标** | "宁德时代的MACD怎么样？" |
 | **历史数据** | "比亚迪最近一个月走势" |
@@ -162,18 +148,45 @@ docker-compose --profile chatglm3 up -d
 
 ---
 
-## 📊 API接口
+## 📚 文档
 
-### 端点列表
+| 文档 | 说明 |
+|------|------|
+| [QUICKSTART.md](./QUICKSTART.md) | 详细的快速开始指南 |
+| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | 完整使用手册 |
+| [DOCKER_GUIDE.md](./DOCKER_GUIDE.md) | Docker部署完全指南 |
+| [MODEL_GUIDE.md](./MODEL_GUIDE.md) | 模型选择和配置 |
+| [TOOLS_GUIDE.md](./TOOLS_GUIDE.md) | 5个工具详细说明 |
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/health` | GET | 健康检查 |
-| `/chat` | POST | 聊天查询 |
-| `/tools` | GET | 工具列表 |
-| `/stocks` | GET | 股票列表 |
+---
 
-**API文档**: 启动服务后访问 http://localhost:8765/docs
+## 🛠️ 技术架构
+
+```
+┌─────────────┐
+│   客户端     │  (CLI / API / 浏览器)
+└──────┬──────┘
+       │ HTTP
+┌──────▼──────┐
+│  FastAPI    │  (端口8765)
+└──────┬──────┘
+       │
+┌──────▼──────┐
+│ LangGraph   │  (Agent核心)
+│   Agent     │
+└──┬───┬───┬──┘
+   │   │   │
+   │   │   └────► RAG检索 (知识库)
+   │   └────────► LLM (ChatGLM3/Mock)
+   └────────────► 工具集 (5个股票工具)
+                  └─► 数据源 (Parquet文件)
+```
+
+**技术栈**:
+- Agent: LangChain + LangGraph
+- LLM: ChatGLM3-6B (可选Mock)
+- Web: FastAPI + Uvicorn
+- 数据: akshare + Parquet
 
 ---
 
@@ -182,55 +195,111 @@ docker-compose --profile chatglm3 up -d
 编辑 `server/configs/server_config.yaml`：
 
 ```yaml
+# 模型配置
 model:
-  mock_mode: true          # false使用真实GPU模型
+  mock_mode: true          # false=使用真实GPU模型
   name: chatglm3-6b
-  device: cuda
+  device: cuda             # cuda/cpu
   path: ./models/chatglm3-6b
 
+# 服务配置
 server:
-  host: 0.0.0.0
-  port: 8765
+  host: 0.0.0.0           # 监听所有IP
+  port: 8765              # 服务端口
 ```
 
 ---
 
 ## 🔧 支持的股票
 
-包含50只A股热门股票：
+**50只A股热门股票**：
 
-- **科技**: 比亚迪、宁德时代、海康威视、立讯精密...
-- **消费**: 贵州茅台、五粮液、伊利股份、海天味业...
-- **金融**: 招商银行、中国平安、工商银行、建设银行...
-- **更多**: 查看 `/stocks` API或运行客户端输入 `/stocks`
+- **新能源**: 比亚迪、宁德时代、天齐锂业、赣锋锂业...
+- **白酒**: 贵州茅台、五粮液、泸州老窖、山西汾酒...
+- **科技**: 海康威视、立讯精密、京东方A...
+- **金融**: 招商银行、中国平安、工商银行...
+- **医药**: 恒瑞医药、药明康德、迈瑞医疗...
+
+**查看完整列表**: 运行客户端后输入 `/stocks` 或访问 http://localhost:8765/stocks
 
 ---
 
-## 📈 数据说明
+## 📊 API端点
 
-- **数据来源**: akshare公开数据
-- **更新频率**: 手动更新（运行 `python scripts/download_stock_data.py`）
-- **时间跨度**: 2020-2026（约6年）
-- **数据量**: 68,000+条历史记录
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/health` | GET | 健康检查 |
+| `/chat` | POST | 聊天查询 |
+| `/tools` | GET | 工具列表 |
+| `/stocks` | GET | 股票列表 |
+
+**完整API文档**: http://localhost:8765/docs
 
 ---
 
 ## ❓ 常见问题
 
-**Q: 需要GPU吗？**  
-A: 不需要。默认Mock模式无需GPU，适合开发测试。
+<details>
+<summary><b>Q1: 需要GPU吗？</b></summary>
 
-**Q: 如何切换到真实LLM？**  
-A: 下载模型后，修改配置文件 `mock_mode: false`。
+**A**: 不需要。默认使用Mock模式，无需GPU即可运行。如需真实LLM，推荐RTX 3060 6GB以上。
+</details>
 
-**Q: 支持哪些显卡？**  
-A: RTX 3060 6GB以上（推荐RTX 3070 8GB）。
+<details>
+<summary><b>Q2: 如何切换到真实模型？</b></summary>
 
-**Q: 如何添加更多股票？**  
-A: 编辑 `scripts/download_stock_data.py`，添加股票代码后重新运行。
+**A**: 
+1. 下载模型：`python scripts/download_model.py --model chatglm3-6b-int4`
+2. 修改配置：编辑 `server/configs/server_config.yaml`，设置 `mock_mode: false`
+3. 重启服务：`python start_server.py`
+</details>
 
-**Q: 可以商用吗？**  
-A: 仅供学习研究使用。
+<details>
+<summary><b>Q3: 数据多久更新？</b></summary>
+
+**A**: 当前是静态数据。可定时运行 `python scripts/download_stock_data.py` 更新。
+</details>
+
+<details>
+<summary><b>Q4: 如何添加更多股票？</b></summary>
+
+**A**: 编辑 `scripts/download_stock_data.py`，在 `STOCK_LIST` 中添加股票代码和名称，然后重新运行脚本。
+</details>
+
+<details>
+<summary><b>Q5: 局域网如何访问？</b></summary>
+
+**A**: 
+- 服务器：`python start_server.py`（默认监听0.0.0.0）
+- 客户端：`python start_client.py http://服务器IP:8765`
+</details>
+
+---
+
+## 🚦 故障排查
+
+### 问题1: 端口被占用
+
+**错误**: `Address already in use: 8765`
+
+**解决**: 修改 `server/configs/server_config.yaml` 中的 `port` 为其他值（如8888）
+
+### 问题2: 模块未找到
+
+**错误**: `ModuleNotFoundError: No module named 'xxx'`
+
+**解决**: 
+```bash
+pip install -r requirements.txt
+pip install -r server/requirements.txt
+pip install -r client/requirements.txt
+```
+
+### 问题3: 数据文件不存在
+
+**错误**: `FileNotFoundError: data/stocks/xxx.parquet`
+
+**解决**: 运行 `python scripts/download_stock_data.py` 下载数据
 
 ---
 
@@ -244,7 +313,7 @@ A: 仅供学习研究使用。
 
 MIT License
 
-**投资有风险，入市需谨慎。本系统不构成任何投资建议。**
+**免责声明**: 投资有风险，入市需谨慎。本系统仅供学习研究使用，不构成任何投资建议。
 
 ---
 
@@ -257,4 +326,6 @@ MIT License
 
 ---
 
-**开始使用** → [快速开始指南](./QUICKSTART.md)
+**开始使用** → 按照上面的【快速开始】步骤操作即可！
+
+有问题？查看 [QUICKSTART.md](./QUICKSTART.md) 或 [USAGE_GUIDE.md](./USAGE_GUIDE.md)
