@@ -28,22 +28,20 @@
 
 ---
 
-## 方式1：Docker部署
+## 方式1：Docker部署（推荐）
 
-> **优势**：无需配置Python环境、无需pip安装依赖、模型自动下载！
+> **零配置！** 自动使用镜像加速，国内外都能用，开箱即用！
 
 ### Mock模式（无需GPU，快速体验）
 
-#### 步骤1：克隆代码
+**仅需两步**：
 
 ```bash
+# 1. 克隆代码
 git clone https://github.com/conan7072/stock-agent.git
 cd stock-agent
-```
 
-#### 步骤2：一键启动
-
-```bash
+# 2. 一键启动（自动处理一切）
 docker-compose --profile mock up -d
 ```
 
@@ -112,31 +110,20 @@ docker-compose --profile mock down
 
 ### GPU模式（需要NVIDIA GPU）
 
-> **完全容器化！模型会在容器内自动下载，无需宿主机配置pip环境！**
+> **零配置！** 模型自动下载，镜像自动加速，完全容器化！
 
-#### 步骤1：克隆代码
+**仅需三步**：
 
 ```bash
+# 1. 克隆代码
 git clone https://github.com/conan7072/stock-agent.git
 cd stock-agent
-```
 
-#### 步骤2：修改配置（可选）
+# 2. 修改配置（改一行）
+# 编辑 server/configs/server_config.yaml
+# 将 mock_mode: true 改为 mock_mode: false
 
-如果需要使用GPU模式，编辑 `server/configs/server_config.yaml`：
-
-```yaml
-model:
-  mock_mode: false              # 改为 false
-  name: chatglm3-6b
-  path: ./models/chatglm3-6b
-  device: cuda
-  quantization: int4
-```
-
-#### 步骤3：一键启动（自动下载模型）
-
-```bash
+# 3. 一键启动（自动下载模型 + 自动镜像加速）
 docker-compose --profile chatglm3 up -d
 ```
 
@@ -209,42 +196,31 @@ print(response.json()['answer'])
 docker-compose --profile chatglm3 down
 ```
 
-#### 关于网络问题
+#### 自动化设计
 
-如果网络访问huggingface.co困难，容器已自动配置国内镜像：
-```yaml
-environment:
-  - HF_ENDPOINT=https://hf-mirror.com
-```
+✅ **Docker镜像加速**：自动使用南京大学镜像，国内外都可用  
+✅ **模型自动下载**：容器启动时自动检测并下载模型  
+✅ **HuggingFace镜像**：自动配置国内镜像站  
 
-如需手动指定代理，可修改 `docker-compose.yml`：
-```yaml
-environment:
-  - HTTP_PROXY=http://your-proxy:port
-  - HTTPS_PROXY=http://your-proxy:port
-```
+**无需任何手动配置，开箱即用！**
 
 ---
 
-### 高级：已有模型的情况
+### 高级配置（可选）
 
-如果你**已经在其他地方下载了模型**，可以直接挂载：
+#### 使用已有模型
+
+如果你已有模型文件，将其放到 `./models/chatglm3-6b/`，容器会自动检测并跳过下载。
+
+#### 更换镜像源
+
+如需使用官方Docker源（国外或有代理），创建 `.env` 文件：
 
 ```bash
-# 1. 将模型放到 ./models/chatglm3-6b/
-# 2. 禁用自动下载
+REGISTRY_MIRROR=
 ```
 
-编辑 `docker-compose.yml`，修改 `agent-chatglm3` 服务：
-```yaml
-environment:
-  - AUTO_DOWNLOAD_MODEL=false  # 改为 false
-```
-
-然后启动：
-```bash
-docker-compose --profile chatglm3 up -d
-```
+详见 [NETWORK_GUIDE.md](./NETWORK_GUIDE.md)
 
 ---
 
@@ -451,40 +427,39 @@ environment:
 ## ❓ 常见问题
 
 <details>
-<summary><b>Q1: Docker模式下还需要配置宿主机Python环境吗？</b></summary>
+<summary><b>Q1: Docker模式需要配置什么吗？</b></summary>
 
-**A**: **不需要！** 这是Docker的核心优势：
-- ❌ 无需在宿主机安装Python
-- ❌ 无需在宿主机pip install
-- ❌ 无需在宿主机下载模型
-- ✅ 容器内自动完成所有操作
+**A**: **不需要任何配置！** 开箱即用：
+- ✅ Docker镜像自动加速（默认使用南京大学镜像）
+- ✅ 模型自动下载（容器内完成）
+- ✅ HuggingFace自动镜像（国内加速）
 
 只需要：
-1. 安装Docker和Docker Compose
-2. `git clone` + `docker-compose up -d`
-</details>
-
-<details>
-<summary><b>Q2: 宿主机的pip有问题怎么办？</b></summary>
-
-**A**: 使用Docker模式！完全不依赖宿主机pip：
 ```bash
 git clone https://github.com/conan7072/stock-agent.git
 cd stock-agent
 docker-compose --profile chatglm3 up -d
 ```
-
-模型会在**容器内**自动下载。
 </details>
 
 <details>
-<summary><b>Q3: 模型下载太慢或失败？</b></summary>
+<summary><b>Q2: 国外用户会受镜像影响吗？</b></summary>
 
-**A**: 容器已自动配置国内镜像 `HF_ENDPOINT=https://hf-mirror.com`。
+**A**: 不会。南京大学镜像国内外都可用，速度稳定。
 
-如果仍然失败：
-1. 检查网络连接
-2. 或手动下载模型后挂载到 `./models/`，并设置 `AUTO_DOWNLOAD_MODEL=false`
+如需使用官方源，创建 `.env`：
+```bash
+REGISTRY_MIRROR=
+```
+</details>
+
+<details>
+<summary><b>Q3: 网络问题怎么办？</b></summary>
+
+**A**: 
+1. **Docker镜像拉取失败**：已自动使用镜像加速，通常不会失败
+2. **模型下载失败**：已自动配置HuggingFace镜像站
+3. **仍有问题**：查看 [NETWORK_GUIDE.md](./NETWORK_GUIDE.md)
 </details>
 
 <details>

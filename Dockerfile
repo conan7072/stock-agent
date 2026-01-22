@@ -11,9 +11,9 @@
 #   如需使用官方源，设置：--build-arg REGISTRY_MIRROR=""
 
 # 第一阶段：选择基础镜像
-# 支持镜像代理，解决中国大陆网络问题
-# 默认使用官方源，可通过 .env 配置镜像加速
-ARG REGISTRY_MIRROR=
+# 默认使用南京大学镜像（国内外都可用）
+# 如需使用官方源，可通过 .env 设置: REGISTRY_MIRROR=
+ARG REGISTRY_MIRROR=docker.nju.edu.cn/
 ARG MODE=mock
 
 # Mock模式：Python基础镜像
@@ -25,7 +25,7 @@ FROM ${REGISTRY_MIRROR}nvidia/cuda:11.8.0-runtime-ubuntu22.04 AS base-gpu
 # 第二阶段：根据模式选择基础镜像
 FROM base-${MODE} AS base
 ARG MODE=mock
-ARG REGISTRY_MIRROR=
+ARG REGISTRY_MIRROR=docker.nju.edu.cn/
 
 # 安装基础工具
 RUN echo "============================================================" && \
