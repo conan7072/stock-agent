@@ -1,5 +1,9 @@
+# Git
+.git
+.gitignore
+
 # Python
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 *.so
@@ -19,29 +23,22 @@ ENV/
 *.swp
 *.swo
 
-# Git
-.git/
-.gitignore
+# 日志
+logs/
+*.log
 
 # 测试
-tests/
-*.pytest_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 模型文件（会通过volume挂载）
+models/
+*.bin
+*.safetensors
 
 # 临时文件
-*.log
 *.tmp
-
-# 模型文件（太大，需要单独挂载）
-models/
-
-# 大数据文件
-*.parquet
-
-# 文档（不需要放进镜像）
-*.md
-docs/
-
-# 开发脚本
-test_*.py
-example_*.py
-verify_*.py
+*.bak
+.DS_Store
+Thumbs.db

@@ -5,15 +5,26 @@
 #   docker build --build-arg MODE=mock -t stock-agent:mock .
 #   docker build --build-arg MODE=chatglm3 -t stock-agent:chatglm3 .
 #   docker build --build-arg MODE=qwen2 -t stock-agent:qwen2 .
+#
+# 镜像加速（中国大陆用户）：
+#   默认使用 dockerproxy.com 镜像代理，无需手动配置
+#   如需使用官方源，设置：--build-arg REGISTRY_MIRROR=""
 
 # 第一阶段：选择基础镜像
+# 支持镜像代理，解决中国大陆网络问题
+ARG REGISTRY_MIRROR=dockerproxy.com/
 ARG MODE=mock
-FROM python:3.11-slim as base-mock
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04 as base-gpu
+
+# Mock模式：Python基础镜像
+FROM ${REGISTRY_MIRROR}library/python:3.11-slim as base-mock
+
+# GPU模式：NVIDIA CUDA镜像
+FROM ${REGISTRY_MIRROR}nvidia/cuda:11.8.0-runtime-ubuntu22.04 as base-gpu
 
 # 第二阶段：根据模式选择基础镜像
 FROM base-${MODE} as base
 ARG MODE=mock
+ARG REGISTRY_MIRROR=dockerproxy.com/
 
 # 安装基础工具
 RUN echo "============================================================" && \
