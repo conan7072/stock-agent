@@ -22,6 +22,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - MODE=mock
+      - AUTO_DOWNLOAD_MODEL=false
     restart: unless-stopped
     profiles:
       - mock
@@ -46,6 +47,10 @@ services:
       - PYTHONUNBUFFERED=1
       - CUDA_VISIBLE_DEVICES=0
       - MODE=chatglm3
+      - AUTO_DOWNLOAD_MODEL=true
+      - MODEL_NAME=chatglm3-6b-int4
+      - MODEL_PATH=/app/models/chatglm3-6b
+      - HF_ENDPOINT=https://hf-mirror.com
     deploy:
       resources:
         reservations:
@@ -77,6 +82,10 @@ services:
       - PYTHONUNBUFFERED=1
       - CUDA_VISIBLE_DEVICES=0
       - MODE=qwen2
+      - AUTO_DOWNLOAD_MODEL=true
+      - MODEL_NAME=qwen2-7b-instruct-int4
+      - MODEL_PATH=/app/models/qwen2-7b
+      - HF_ENDPOINT=https://hf-mirror.com
     deploy:
       resources:
         reservations:
