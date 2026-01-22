@@ -71,3 +71,16 @@ Thumbs.db
 temp/
 tmp/
 *.tmp
+
+# 测试文件
+test_*.py
+example_*.py
+
+# 内部文档（不上传GitHub）
+cursor.md
+tracker.md
+STATUS.md
+COMPLETED.md
+VERIFY.md
+GITHUB_SETUP.md
+GITHUB_SUCCESS.md
