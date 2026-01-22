@@ -12,19 +12,20 @@
 
 # 第一阶段：选择基础镜像
 # 支持镜像代理，解决中国大陆网络问题
-ARG REGISTRY_MIRROR=dockerproxy.com/
+# 默认使用官方源，可通过 .env 配置镜像加速
+ARG REGISTRY_MIRROR=
 ARG MODE=mock
 
 # Mock模式：Python基础镜像
-FROM ${REGISTRY_MIRROR}library/python:3.11-slim as base-mock
+FROM ${REGISTRY_MIRROR}python:3.11-slim AS base-mock
 
 # GPU模式：NVIDIA CUDA镜像
-FROM ${REGISTRY_MIRROR}nvidia/cuda:11.8.0-runtime-ubuntu22.04 as base-gpu
+FROM ${REGISTRY_MIRROR}nvidia/cuda:11.8.0-runtime-ubuntu22.04 AS base-gpu
 
 # 第二阶段：根据模式选择基础镜像
-FROM base-${MODE} as base
+FROM base-${MODE} AS base
 ARG MODE=mock
-ARG REGISTRY_MIRROR=dockerproxy.com/
+ARG REGISTRY_MIRROR=
 
 # 安装基础工具
 RUN echo "============================================================" && \

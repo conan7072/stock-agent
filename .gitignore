@@ -35,6 +35,7 @@ ENV/
 
 # 环境变量
 .env
+!.env.example
 .env.local
 
 # 模型文件（太大不上传）
