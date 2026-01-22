@@ -37,7 +37,17 @@ ls -la
 
 ---
 
-### 步骤2：下载模型
+### 步骤2：安装下载依赖
+
+```bash
+# 安装huggingface_hub（下载模型必需）
+pip install huggingface_hub
+
+# 或安装完整依赖
+pip install -r requirements.txt
+```
+
+### 步骤3：下载模型
 
 ```bash
 # 下载ChatGLM3-6B INT4（适合RTX 3070 8GB）
@@ -92,7 +102,7 @@ ls -la models/chatglm3-6b/
 
 ---
 
-### 步骤3：修改配置
+### 步骤4：修改配置
 
 编辑 `server/configs/server_config.yaml`：
 
@@ -120,7 +130,7 @@ cat server/configs/server_config.yaml | grep mock_mode
 
 ---
 
-### 步骤4：Docker部署
+### 步骤5：Docker部署
 
 ```bash
 # 启动GPU版本（ChatGLM3）
@@ -168,7 +178,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8765 (Press CTRL+C to quit)
 
 ---
 
-### 步骤5：测试服务
+### 步骤6：测试服务
 
 **测试健康检查**:
 ```bash

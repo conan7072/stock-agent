@@ -31,9 +31,13 @@ cd stock-agent
 ### 步骤2：安装依赖
 
 ```bash
+# 安装所有依赖
 pip install -r requirements.txt
 pip install -r server/requirements.txt
 pip install -r client/requirements.txt
+
+# 或最小安装（仅下载模型需要）
+pip install huggingface_hub
 ```
 
 ### 步骤3：准备数据

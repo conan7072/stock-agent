@@ -13,6 +13,7 @@ torch>=2.1.0
 accelerate>=0.25.0
 sentencepiece>=0.1.99
 protobuf>=3.20.0
+huggingface_hub>=0.20.0
 
 # FastAPI服务
 fastapi>=0.104.0
