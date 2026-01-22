@@ -9,8 +9,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODE: mock
-        # 默认使用南京大学镜像（国内外都可用）
-        REGISTRY_MIRROR: ${REGISTRY_MIRROR:-docker.nju.edu.cn/}
     image: stock-agent:mock
     container_name: stock-agent-mock
     ports:
@@ -34,8 +32,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODE: gpu
-        # 默认使用南京大学镜像（国内外都可用）
-        REGISTRY_MIRROR: ${REGISTRY_MIRROR:-docker.nju.edu.cn/}
     image: stock-agent:chatglm3
     container_name: stock-agent-chatglm3
     ports:
@@ -71,8 +67,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODE: gpu
-        # 默认使用南京大学镜像（国内外都可用）
-        REGISTRY_MIRROR: ${REGISTRY_MIRROR:-docker.nju.edu.cn/}
     image: stock-agent:qwen2
     container_name: stock-agent-qwen2
     ports:
