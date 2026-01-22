@@ -14,7 +14,7 @@
 - 🤖 **智能对话**：基于LLM的自然语言交互
 - 🔧 **5大工具**：价格查询、技术指标、历史数据、股票对比、综合分析
 - 📚 **知识库**：金融术语RAG检索
-- 🐳 **Docker部署**：一键启动
+- 🐳 **Docker部署**：一键启动，**容器内自动下载模型**
 - 🌐 **API接口**：FastAPI RESTful服务
 
 ---
@@ -23,12 +23,234 @@
 
 选择一种方式开始：
 
-- **[方式1：本地使用](#方式1本地使用)** - 直接运行Python代码（开发/测试）
-- **[方式2：Docker部署](#方式2docker部署)** - 容器化部署（生产推荐）
+- **[方式1：Docker部署](#方式1docker部署)** - **推荐！容器内自动下载模型，无需配置宿主机环境**
+- **[方式2：本地使用](#方式2本地使用)** - 直接运行Python代码（开发/调试）
 
 ---
 
-## 方式1：本地使用
+## 方式1：Docker部署
+
+> **优势**：无需配置Python环境、无需pip安装依赖、模型自动下载！
+
+### Mock模式（无需GPU，快速体验）
+
+#### 步骤1：克隆代码
+
+```bash
+git clone https://github.com/conan7072/stock-agent.git
+cd stock-agent
+```
+
+#### 步骤2：一键启动
+
+```bash
+docker-compose --profile mock up -d
+```
+
+**就这么简单！** 容器会自动：
+- ✅ 构建Docker镜像
+- ✅ 安装所有依赖
+- ✅ 启动服务（Mock模式无需下载模型）
+
+#### 步骤3：查看日志
+
+```bash
+docker-compose logs -f agent-mock
+```
+
+应该看到：
+```
+==========================================
+股票咨询Agent - Docker启动
+==========================================
+ℹ️  跳过模型自动下载（AUTO_DOWNLOAD_MODEL=false）
+
+==========================================
+🚀 启动Agent服务...
+==========================================
+
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8765
+```
+
+#### 步骤4：使用服务
+
+**浏览器测试**（推荐）：
+
+访问 http://localhost:8765/docs
+
+点击 `POST /chat` → `Try it out` → 输入：
+```json
+{"query": "比亚迪现在多少钱？"}
+```
+
+**命令行测试**：
+```bash
+curl -X POST http://localhost:8765/chat \
+  -H "Content-Type: application/json" \
+  -d '{"query": "比亚迪现在多少钱？"}'
+```
+
+**Python调用**：
+```python
+import requests
+
+response = requests.post(
+    "http://localhost:8765/chat",
+    json={"query": "比亚迪现在多少钱？"}
+)
+print(response.json()['answer'])
+```
+
+#### 停止服务
+
+```bash
+docker-compose --profile mock down
+```
+
+---
+
+### GPU模式（需要NVIDIA GPU）
+
+> **完全容器化！模型会在容器内自动下载，无需宿主机配置pip环境！**
+
+#### 步骤1：克隆代码
+
+```bash
+git clone https://github.com/conan7072/stock-agent.git
+cd stock-agent
+```
+
+#### 步骤2：修改配置（可选）
+
+如果需要使用GPU模式，编辑 `server/configs/server_config.yaml`：
+
+```yaml
+model:
+  mock_mode: false              # 改为 false
+  name: chatglm3-6b
+  path: ./models/chatglm3-6b
+  device: cuda
+  quantization: int4
+```
+
+#### 步骤3：一键启动（自动下载模型）
+
+```bash
+docker-compose --profile chatglm3 up -d
+```
+
+**容器会自动完成**：
+- ✅ 构建Docker镜像（包含CUDA环境）
+- ✅ 安装所有Python依赖（含huggingface_hub）
+- ✅ **检测模型是否存在**
+- ✅ **自动下载ChatGLM3-6B模型**（约4GB，15-30分钟）
+- ✅ 启动GPU服务
+
+**完全不依赖宿主机的pip环境！**
+
+#### 步骤4：查看下载进度
+
+```bash
+docker-compose logs -f agent-chatglm3
+```
+
+你会看到：
+```
+==========================================
+股票咨询Agent - Docker启动
+==========================================
+
+📥 检查模型文件...
+⚠️  模型不存在，开始自动下载...
+
+模型: chatglm3-6b-int4
+目标路径: /app/models/chatglm3-6b
+
+[1/5] 检查依赖...
+[2/5] 检查磁盘空间...
+[3/5] 检查目标路径...
+[4/5] 配置下载参数...
+[5/5] 开始下载模型...
+
+下载进度: 45%...
+...
+✅ 模型下载完成！
+
+==========================================
+🚀 启动Agent服务...
+==========================================
+
+正在加载模型: ./models/chatglm3-6b
+Agent初始化完成：LLM=ChatGLM3LLM, 工具数=5
+INFO:     Uvicorn running on http://0.0.0.0:8765
+```
+
+#### 步骤5：使用服务
+
+**浏览器测试**：
+
+访问 http://localhost:8765/docs
+
+**API调用**：
+```python
+import requests
+
+response = requests.post(
+    "http://localhost:8765/chat",
+    json={"query": "分析一下贵州茅台"}
+)
+print(response.json()['answer'])
+```
+
+#### 停止服务
+
+```bash
+docker-compose --profile chatglm3 down
+```
+
+#### 关于网络问题
+
+如果网络访问huggingface.co困难，容器已自动配置国内镜像：
+```yaml
+environment:
+  - HF_ENDPOINT=https://hf-mirror.com
+```
+
+如需手动指定代理，可修改 `docker-compose.yml`：
+```yaml
+environment:
+  - HTTP_PROXY=http://your-proxy:port
+  - HTTPS_PROXY=http://your-proxy:port
+```
+
+---
+
+### 高级：已有模型的情况
+
+如果你**已经在其他地方下载了模型**，可以直接挂载：
+
+```bash
+# 1. 将模型放到 ./models/chatglm3-6b/
+# 2. 禁用自动下载
+```
+
+编辑 `docker-compose.yml`，修改 `agent-chatglm3` 服务：
+```yaml
+environment:
+  - AUTO_DOWNLOAD_MODEL=false  # 改为 false
+```
+
+然后启动：
+```bash
+docker-compose --profile chatglm3 up -d
+```
+
+---
+
+## 方式2：本地使用
+
+> **适合开发调试**，但需要配置Python环境
 
 ### 步骤1：克隆代码
 
@@ -40,7 +262,6 @@ cd stock-agent
 ### 步骤2：安装依赖
 
 ```bash
-# 安装所有依赖
 pip install -r requirements.txt
 pip install -r server/requirements.txt
 pip install -r client/requirements.txt
@@ -56,14 +277,13 @@ python scripts/download_stock_data.py
 python scripts/convert_index.py
 ```
 
-### 步骤4：启动服务（Mock模式，无需GPU）
+### 步骤4：启动服务（Mock模式）
 
 ```bash
-# 启动服务端
 python start_server.py
 ```
 
-服务启动后会显示：
+服务启动后：
 ```
 ============================================================
 股票咨询Agent服务器
@@ -73,9 +293,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8765
 
 ### 步骤5：使用服务
 
-#### 方式A：命令行客户端
-
-新开一个终端：
+**命令行客户端**（新开终端）：
 ```bash
 cd stock-agent
 python start_client.py
@@ -84,14 +302,10 @@ python start_client.py
 您: 比亚迪现在多少钱？
 Agent: 【比亚迪(002594)】最新行情：收盘价94.10元...
 
-您: 什么是MACD指标？
-Agent: MACD是异同移动平均线...
-
 您: exit  # 退出
 ```
 
-#### 方式B：API调用
-
+**API调用**：
 ```python
 import requests
 
@@ -102,25 +316,21 @@ response = requests.post(
 print(response.json()['answer'])
 ```
 
-#### 方式C：浏览器测试
+**浏览器测试**：
 
 访问 http://localhost:8765/docs
 
-在Swagger UI中：
-1. 点击 `POST /chat`
-2. 点击 "Try it out"
-3. 输入：`{"query": "比亚迪现在多少钱？"}`
-4. 点击 "Execute"
+---
 
-### GPU模式（可选，需要显卡）
+### GPU模式（本地）
 
-如果有GPU（如RTX 3070），可以使用真实LLM：
+如果有GPU且想在本地运行真实LLM：
 
 ```bash
 # 1. 安装下载工具
 pip install huggingface_hub
 
-# 2. 下载模型（约15-30分钟）
+# 2. 下载模型
 python scripts/download_model.py --model chatglm3-6b-int4
 
 # 3. 修改配置
@@ -131,157 +341,7 @@ python scripts/download_model.py --model chatglm3-6b-int4
 python start_server.py
 ```
 
-**详细GPU部署指南**: [LOCAL_GPU_GUIDE.md](./LOCAL_GPU_GUIDE.md)
-
----
-
-## 方式2：Docker部署
-
-### Mock模式（无需GPU，推荐测试）
-
-#### 步骤1：克隆代码
-
-```bash
-git clone https://github.com/conan7072/stock-agent.git
-cd stock-agent
-```
-
-#### 步骤2：启动服务
-
-```bash
-docker-compose --profile mock up -d
-```
-
-#### 步骤3：查看日志
-
-```bash
-docker-compose logs -f agent-mock
-```
-
-应该看到：
-```
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8765
-```
-
-#### 步骤4：使用服务
-
-**浏览器测试**：
-访问 http://localhost:8765/docs
-
-**API调用**：
-```python
-import requests
-
-response = requests.post(
-    "http://localhost:8765/chat",
-    json={"query": "比亚迪现在多少钱？"}
-)
-print(response.json()['answer'])
-```
-
-**命令行**：
-```bash
-curl -X POST http://localhost:8765/chat \
-  -H "Content-Type: application/json" \
-  -d '{"query": "比亚迪现在多少钱？"}'
-```
-
-#### 停止服务
-
-```bash
-docker-compose --profile mock down
-```
-
----
-
-### GPU模式（需要NVIDIA GPU）
-
-#### 步骤1：克隆代码
-
-```bash
-git clone https://github.com/conan7072/stock-agent.git
-cd stock-agent
-```
-
-#### 步骤2：下载模型
-
-```bash
-# 安装下载工具
-pip install huggingface_hub
-
-# 下载模型（约15-30分钟）
-python scripts/download_model.py --model chatglm3-6b-int4
-```
-
-模型会下载到 `./models/chatglm3-6b`
-
-#### 步骤3：修改配置
-
-编辑 `server/configs/server_config.yaml`：
-
-```yaml
-model:
-  mock_mode: false              # 改为 false
-  name: chatglm3-6b
-  path: ./models/chatglm3-6b
-  device: cuda
-  quantization: int4
-
-server:
-  host: 0.0.0.0
-  port: 8765
-```
-
-#### 步骤4：启动服务
-
-```bash
-docker-compose --profile chatglm3 up -d
-```
-
-#### 步骤5：查看日志
-
-```bash
-docker-compose logs -f agent-chatglm3
-```
-
-应该看到：
-```
-正在加载模型: ./models/chatglm3-6b
-Agent初始化完成：LLM=ChatGLM3LLM, 工具数=5
-INFO:     Uvicorn running on http://0.0.0.0:8765
-```
-
-#### 步骤6：使用服务
-
-**浏览器测试**：
-访问 http://localhost:8765/docs
-
-**API调用**：
-```python
-import requests
-
-response = requests.post(
-    "http://localhost:8765/chat",
-    json={"query": "分析一下贵州茅台"}
-)
-print(response.json()['answer'])
-```
-
-**命令行**：
-```bash
-curl -X POST http://localhost:8765/chat \
-  -H "Content-Type: application/json" \
-  -d '{"query": "分析一下贵州茅台"}'
-```
-
-#### 停止服务
-
-```bash
-docker-compose --profile chatglm3 down
-```
-
-**完整GPU部署指南**: [LOCAL_GPU_GUIDE.md](./LOCAL_GPU_GUIDE.md)
+**详细指南**: [LOCAL_GPU_GUIDE.md](./LOCAL_GPU_GUIDE.md)
 
 ---
 
@@ -295,19 +355,6 @@ docker-compose --profile chatglm3 down
 | **股票对比** | "比较比亚迪和宁德时代" |
 | **综合分析** | "分析一下贵州茅台" |
 | **知识问答** | "什么是RSI指标？" |
-
----
-
-## 📚 完整文档
-
-| 文档 | 说明 |
-|------|------|
-| [LOCAL_GPU_GUIDE.md](./LOCAL_GPU_GUIDE.md) | GPU部署完整指南 |
-| [DOCKER_GUIDE.md](./DOCKER_GUIDE.md) | Docker详细文档 |
-| [MODEL_GUIDE.md](./MODEL_GUIDE.md) | 模型选择指南 |
-| [TOOLS_GUIDE.md](./TOOLS_GUIDE.md) | 工具使用说明 |
-| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | 完整使用手册 |
-| [QUICKSTART.md](./QUICKSTART.md) | 快速开始指南 |
 
 ---
 
@@ -338,6 +385,7 @@ docker-compose --profile chatglm3 down
 - LLM: ChatGLM3-6B (可选Mock)
 - Web: FastAPI + Uvicorn
 - 数据: akshare + Parquet
+- 部署: Docker + Docker Compose
 
 ---
 
@@ -359,6 +407,16 @@ server:
   port: 8765              # 服务端口
 ```
 
+**Docker环境变量**（`docker-compose.yml`）：
+
+```yaml
+environment:
+  - AUTO_DOWNLOAD_MODEL=true              # 自动下载模型
+  - MODEL_NAME=chatglm3-6b-int4           # 模型名称
+  - MODEL_PATH=/app/models/chatglm3-6b    # 模型路径
+  - HF_ENDPOINT=https://hf-mirror.com     # 镜像站
+```
+
 ---
 
 ## 🔧 支持的股票
@@ -371,9 +429,9 @@ server:
 - **金融**: 招商银行、中国平安、工商银行...
 - **医药**: 恒瑞医药、药明康德、迈瑞医疗...
 
-**查看完整列表**: 
-- 运行客户端后输入 `/stocks`
-- 访问 http://localhost:8765/stocks
+**查看完整列表**:
+- 浏览器：http://localhost:8765/stocks
+- CLI：输入 `/stocks`
 
 ---
 
@@ -393,90 +451,181 @@ server:
 ## ❓ 常见问题
 
 <details>
-<summary><b>Q1: 需要GPU吗？</b></summary>
+<summary><b>Q1: Docker模式下还需要配置宿主机Python环境吗？</b></summary>
 
-**A**: 不需要。默认使用Mock模式，无需GPU。如需真实LLM，推荐RTX 3060 6GB以上。
+**A**: **不需要！** 这是Docker的核心优势：
+- ❌ 无需在宿主机安装Python
+- ❌ 无需在宿主机pip install
+- ❌ 无需在宿主机下载模型
+- ✅ 容器内自动完成所有操作
+
+只需要：
+1. 安装Docker和Docker Compose
+2. `git clone` + `docker-compose up -d`
 </details>
 
 <details>
-<summary><b>Q2: Mock模式和GPU模式有什么区别？</b></summary>
+<summary><b>Q2: 宿主机的pip有问题怎么办？</b></summary>
 
-**A**: 
+**A**: 使用Docker模式！完全不依赖宿主机pip：
+```bash
+git clone https://github.com/conan7072/stock-agent.git
+cd stock-agent
+docker-compose --profile chatglm3 up -d
+```
+
+模型会在**容器内**自动下载。
+</details>
+
+<details>
+<summary><b>Q3: 模型下载太慢或失败？</b></summary>
+
+**A**: 容器已自动配置国内镜像 `HF_ENDPOINT=https://hf-mirror.com`。
+
+如果仍然失败：
+1. 检查网络连接
+2. 或手动下载模型后挂载到 `./models/`，并设置 `AUTO_DOWNLOAD_MODEL=false`
+</details>
+
+<details>
+<summary><b>Q4: Mock模式和GPU模式有什么区别？</b></summary>
+
+**A**:
 - **Mock模式**: 使用预设模板回答，速度快，无需GPU，适合开发测试
 - **GPU模式**: 使用真实LLM（ChatGLM3），回答质量高，需要显卡
 </details>
 
 <details>
-<summary><b>Q3: 如何添加更多股票？</b></summary>
+<summary><b>Q5: 需要什么GPU？</b></summary>
 
-**A**: 编辑 `scripts/download_stock_data.py`，在 `STOCK_LIST` 中添加股票代码和名称，然后重新运行：
+**A**:
+- **ChatGLM3-6B INT4**: RTX 3060 6GB+ / RTX 3070 8GB / RTX 4060
+- **Qwen2-7B INT4**: RTX 3080 10GB+ / RTX 4070
+- **无GPU**: 使用Mock模式
+</details>
+
+<details>
+<summary><b>Q6: 如何添加更多股票？</b></summary>
+
+**A**: 编辑 `scripts/download_stock_data.py`，在 `STOCK_LIST` 中添加股票：
+```python
+STOCK_LIST = [
+    ("比亚迪", "002594"),
+    ("你的股票", "代码"),
+    # ...
+]
+```
+
+重新运行：
 ```bash
-python scripts/download_stock_data.py
+python scripts/download_stock_data.py  # 本地模式
+# 或
+docker-compose restart agent-xxx       # Docker模式
 ```
 </details>
 
 <details>
-<summary><b>Q4: 数据多久更新？</b></summary>
+<summary><b>Q7: 局域网如何访问？</b></summary>
 
-**A**: 当前是静态数据。可定时运行更新：
-```bash
-python scripts/download_stock_data.py
-```
-</details>
-
-<details>
-<summary><b>Q5: 局域网如何访问？</b></summary>
-
-**A**: 
+**A**:
 - 服务器默认监听 `0.0.0.0`，局域网内可访问
 - 客户端连接: `python start_client.py http://服务器IP:8765`
+- 浏览器访问: `http://服务器IP:8765/docs`
 </details>
 
 <details>
-<summary><b>Q6: Docker找不到模型？</b></summary>
+<summary><b>Q8: 如何更新到最新版本？</b></summary>
 
-**A**: 确保：
-1. 模型已下载到 `./models/chatglm3-6b`
-2. 配置文件中 `mock_mode: false`
-3. 使用正确的profile: `docker-compose --profile chatglm3 up -d`
+**A**:
+```bash
+cd stock-agent
+git pull origin main
+docker-compose --profile chatglm3 down
+docker-compose --profile chatglm3 up -d --build
+```
 </details>
 
 ---
 
 ## 🚦 故障排查
 
-### 问题1: 端口被占用
+### 问题1: Docker构建失败
 
-**错误**: `Address already in use: 8765`
+**错误**: `Cannot connect to the Docker daemon`
 
-**解决**: 修改 `server/configs/server_config.yaml` 中的 `port`
-
-### 问题2: 模块未找到
-
-**错误**: `ModuleNotFoundError: No module named 'xxx'`
-
-**解决**: 
+**解决**:
 ```bash
-pip install -r requirements.txt
-pip install -r server/requirements.txt
-pip install -r client/requirements.txt
+# 启动Docker服务
+sudo systemctl start docker  # Linux
+# 或打开Docker Desktop      # Windows/Mac
 ```
 
-### 问题3: 下载模型无反应
+### 问题2: GPU不可用
 
-**原因**: 缺少 `huggingface_hub`
+**错误**: `could not select device driver "" with capabilities: [[gpu]]`
 
-**解决**: 
+**解决**:
+1. 安装NVIDIA Docker Runtime:
 ```bash
-pip install huggingface_hub
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | \
+  sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
 ```
 
-### 问题4: GPU未被使用
+2. 验证:
+```bash
+docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+```
 
-**检查**:
-1. 安装NVIDIA Docker: `docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi`
-2. 配置文件: `device: cuda`
-3. Docker配置: 使用 `--profile chatglm3`
+### 问题3: 端口被占用
+
+**错误**: `Bind for 0.0.0.0:8765 failed: port is already allocated`
+
+**解决**: 修改 `docker-compose.yml`：
+```yaml
+ports:
+  - "8766:8765"  # 改为其他端口
+```
+
+### 问题4: 模型下载失败
+
+**错误**: `Failed to download model`
+
+**解决**:
+1. 检查磁盘空间（需要>10GB）
+2. 检查网络连接（需访问huggingface.co或镜像站）
+3. 或手动下载后挂载：
+```bash
+# 将模型放到 ./models/chatglm3-6b/
+# 修改 docker-compose.yml: AUTO_DOWNLOAD_MODEL=false
+```
+
+### 问题5: 容器启动后立即退出
+
+**检查日志**:
+```bash
+docker-compose logs agent-chatglm3
+```
+
+常见原因：
+- 配置文件错误（`server_config.yaml`）
+- 模型路径不正确
+- GPU驱动未安装
+
+---
+
+## 📚 完整文档
+
+| 文档 | 说明 |
+|------|------|
+| [DOCKER_GUIDE.md](./DOCKER_GUIDE.md) | Docker详细文档 |
+| [LOCAL_GPU_GUIDE.md](./LOCAL_GPU_GUIDE.md) | 本地GPU部署指南 |
+| [MODEL_GUIDE.md](./MODEL_GUIDE.md) | 模型选择指南 |
+| [TOOLS_GUIDE.md](./TOOLS_GUIDE.md) | 工具使用说明 |
+| [USAGE_GUIDE.md](./USAGE_GUIDE.md) | 完整使用手册 |
 
 ---
 
@@ -505,5 +654,5 @@ MIT License
 
 **选择你的使用方式开始吧！** 🚀
 
-- 📖 [本地使用](#方式1本地使用)
-- 🐳 [Docker部署](#方式2docker部署)
+- 🐳 **推荐：[Docker部署](#方式1docker部署)** - 零配置，容器内自动下载模型
+- 📖 [本地使用](#方式2本地使用) - 开发调试模式
