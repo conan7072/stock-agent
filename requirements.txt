@@ -1,0 +1,65 @@
+# 股票咨询Agent系统 - 总依赖清单
+# Python >= 3.10
+
+# 核心框架
+langchain>=0.1.0
+langgraph>=0.0.20
+langchain-community>=0.0.20
+langchain-core>=0.1.0
+
+# LLM相关
+transformers>=4.36.0
+torch>=2.1.0
+accelerate>=0.25.0
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+
+# FastAPI服务
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+sse-starlette>=1.6.5
+websockets>=12.0
+
+# RAG和向量数据库
+chromadb>=0.4.18
+sentence-transformers>=2.2.2
+
+# 数据处理
+pandas>=2.1.0
+numpy>=1.24.0
+pyarrow>=14.0.0
+akshare>=1.11.0
+
+# 技术指标计算
+ta-lib>=0.4.28
+pandas-ta>=0.3.14b
+
+# 工具库
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+httpx>=0.25.0
+aiofiles>=23.2.1
+
+# 日志和监控
+structlog>=23.2.0
+prometheus-client>=0.19.0
+
+# 测试
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-cov>=4.1.0
+locust>=2.18.0
+httpx>=0.25.0
+
+# CLI工具（客户端）
+typer[all]>=0.9.0
+rich>=13.7.0
+prompt-toolkit>=3.0.43
+
+# 开发工具
+black>=23.12.0
+flake8>=6.1.0
+mypy>=1.7.1

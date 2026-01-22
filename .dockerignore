@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# 测试
+tests/
+*.pytest_cache/
+
+# 临时文件
+*.log
+*.tmp
+
+# 模型文件（太大，需要单独挂载）
+models/
+
+# 大数据文件
+*.parquet
+
+# 文档（不需要放进镜像）
+*.md
+docs/
+
+# 开发脚本
+test_*.py
+example_*.py
+verify_*.py

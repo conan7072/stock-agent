@@ -1,0 +1,89 @@
+# Docker Compose 配置
+# 支持多种模式：Mock（无GPU）、ChatGLM3、Qwen2
+
+version: '3.8'
+
+services:
+  # Mock模式（无GPU，开发测试）
+  agent-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODE: mock
+    image: stock-agent:mock
+    container_name: stock-agent-mock
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./data:/app/data
+      - ./server/configs:/app/server/configs
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODE=mock
+    restart: unless-stopped
+    profiles:
+      - mock
+
+  # ChatGLM3模式（需要GPU）
+  agent-chatglm3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODE: gpu
+    image: stock-agent:chatglm3
+    container_name: stock-agent-chatglm3
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./server/configs:/app/server/configs
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CUDA_VISIBLE_DEVICES=0
+      - MODE=chatglm3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    profiles:
+      - chatglm3
+
+  # Qwen2模式（需要GPU）
+  agent-qwen2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODE: gpu
+    image: stock-agent:qwen2
+    container_name: stock-agent-qwen2
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./server/configs:/app/server/configs
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CUDA_VISIBLE_DEVICES=0
+      - MODE=qwen2
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    profiles:
+      - qwen2

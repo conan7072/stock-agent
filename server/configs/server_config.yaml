@@ -1,0 +1,55 @@
+# 服务端配置文件
+
+server:
+  host: "0.0.0.0"
+  port: 8765
+  workers: 1
+  reload: false  # 开发时可设为true
+
+auth:
+  enabled: true
+  token: "change-me-in-production"  # 生产环境务必修改
+
+queue:
+  max_concurrent: 3       # 最大并发请求数
+  max_queue_size: 10      # 最大排队数
+  timeout: 60             # 请求超时（秒）
+
+model:
+  name: "chatglm3-6b"
+  path: "./models/chatglm3-6b"
+  quantization: "int4"    # int4/int8/fp16
+  device: "cuda"          # cuda/cpu
+  max_length: 4096
+  temperature: 0.7
+  top_p: 0.9
+  mock_mode: true         # true=使用Mock LLM(无需GPU), false=使用真实模型
+
+rag:
+  enabled: true
+  embedding_model: "BAAI/bge-small-zh-v1.5"
+  top_k: 5
+  score_threshold: 0.7
+  chunk_size: 500
+  chunk_overlap: 50
+
+data:
+  stock_data_path: "./data/stocks"
+  knowledge_path: "./data/knowledge"
+  vector_db_path: "./data/vector_db"
+
+cache:
+  enabled: false          # 是否启用Redis缓存
+  redis_host: "localhost"
+  redis_port: 6379
+  redis_db: 0
+  ttl: 3600              # 缓存过期时间（秒）
+
+logging:
+  level: "INFO"           # DEBUG/INFO/WARNING/ERROR
+  format: "json"          # json/text
+  file: "./logs/server.log"
+
+monitoring:
+  enabled: true
+  prometheus_port: 9090

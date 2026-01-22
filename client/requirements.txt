@@ -1,0 +1,20 @@
+# 客户端依赖
+# 在客户端（无需GPU的机器）安装
+
+# HTTP客户端
+httpx>=0.25.0
+websockets>=12.0
+
+# CLI框架
+typer[all]>=0.9.0
+rich>=13.7.0
+prompt-toolkit>=3.0.43
+
+# 配置管理
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# 工具
+click>=8.1.7
